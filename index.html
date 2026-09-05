@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Sprint Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --white: #FFFFFF;
+      --black: #111111;
+      --paper: #F3FAFB;
+      --paper-raised: #FFFFFF;
+      --ink: #111111;
+      --ink-soft: rgba(17, 17, 17, 0.58);
+      --line: #CFE9EB;
+      --intake: #E9F6F7;
+      --intake-line: #AEDBDF;
+      --accent: #8AC6CC;
+      --accent-dark: #3F7379;
+      --accent-ink: #2E5A5F;
+      --danger: #111111;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Roboto', system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 32px 60px;
+    }
+
+    header.board-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .title-block h1 {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      margin: 0 0 4px;
+      letter-spacing: .2px;
+    }
+
+    .sprint-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sprint-label {
+      font-size: 14px;
+      color: var(--ink-soft);
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      padding: 2px 4px;
+      border-radius: 4px;
+      min-width: 220px;
+    }
+
+    .sprint-label:hover,
+    .sprint-label:focus {
+      background: var(--paper-raised);
+      outline: 1px solid var(--line);
+    }
+
+    .head-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      border-radius: 8px;
+      padding: 9px 16px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--black);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+      color: var(--white);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost:hover {
+      background: var(--paper-raised);
+    }
+
+    .sync-note {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
+
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .lane {
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .lane.intake {
+      background: var(--intake);
+      border-color: var(--intake-line);
+    }
+
+    .lane-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .lane.intake .lane-head {
+      border-bottom-color: var(--intake-line);
+    }
+
+    .lane-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .lane-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .lane-count {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-left: 2px;
+    }
+
+    .lane-head .btn {
+      margin-left: auto;
+      padding: 5px 12px;
+      font-size: 12.5px;
+    }
+
+    .capacity-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .capacity-wrap input {
+      width: 44px;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 3px 5px;
+      border-radius: 5px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .hours-summary {
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 100px;
+      background: var(--intake);
+      color: var(--accent-ink);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .hours-summary.over {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .intake-hours {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .lane-body {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      min-height: 88px;
+    }
+
+    .lane-body.drop-target {
+      background: rgba(31, 111, 107, 0.06);
+    }
+
+    .lane-body:empty::after {
+      content: "No tickets yet";
+      color: var(--ink-soft);
+      font-size: 12.5px;
+      align-self: center;
+      font-style: italic;
+    }
+
+    .completed-section {
+      margin-top: 20px;
+    }
+
+    .completed-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 4px;
+      user-select: none;
+    }
+
+    .completed-head .chevron {
+      transition: transform .15s ease;
+      color: var(--ink-soft);
+      font-size: 11px;
+    }
+
+    .completed-head.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .completed-head h3 {
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+
+    .completed-body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 6px 4px 4px;
+    }
+
+    .completed-body.hidden {
+      display: none;
+    }
+
+    .card.completed-card {
+      border-left-color: var(--line);
+    }
+
+    .card.completed-card .card-title {
+      text-decoration: line-through;
+      color: var(--ink-soft);
+    }
+
+    .card-assignee-pill {
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    .client-section {
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .client-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      padding: 12px 16px;
+    }
+
+    .client-head .chevron {
+      transition: transform .15s ease;
+      color: var(--ink-soft);
+      font-size: 11px;
+    }
+
+    .client-head.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .client-head h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .client-head .btn {
+      margin-left: auto;
+      padding: 5px 12px;
+      font-size: 12.5px;
+    }
+
+    .client-body {
+      padding: 0 16px 14px;
+    }
+
+    .client-body.hidden {
+      display: none;
+    }
+
+    table.client-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table.client-table th {
+      text-align: left;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    table.client-table td {
+      font-size: 13px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    table.client-table td[contenteditable="true"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+      border-radius: 4px;
+    }
+
+    table.client-table td[contenteditable="true"]:empty::before {
+      content: attr(data-placeholder);
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+
+    .client-name-col {
+      width: 18%;
+      font-weight: 500;
+    }
+
+    .client-goal-col {
+      width: 38%;
+    }
+
+    .client-del-col {
+      width: 28px;
+    }
+
+    .client-del-col button {
+      border: none;
+      background: none;
+      color: var(--ink-soft);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .client-del-col button:hover {
+      color: var(--black);
+    }
+
+    .card {
+      flex: 0 0 240px;
+      background: var(--paper-raised);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--card-color, var(--accent));
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .lane.intake .card {
+      background: #fff;
+    }
+
+    .card.completed {
+      opacity: .55;
+    }
+
+    .card.completed .card-title {
+      text-decoration: line-through;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .card-check {
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 13.5px;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .card-del {
+      border: none;
+      background: none;
+      color: var(--ink-soft);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+
+    .card-del:hover {
+      color: var(--danger);
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: var(--paper);
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .pill.hours {
+      background: var(--intake);
+      color: var(--accent-ink);
+      font-weight: 500;
+    }
+
+    .card-collabs {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+
+    .card-notes {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+
+    .card-assign {
+      margin-top: 2px;
+    }
+
+    .card-assign select {
+      width: 100%;
+      font-size: 11.5px;
+      font-family: inherit;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    /* Modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 26, 25, .42);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+
+    .modal {
+      background: var(--paper-raised);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 440px;
+      padding: 22px 24px 20px;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      font-family: 'Roboto', sans-serif;
+      font-size: 19px;
+      margin: 0 0 16px;
+      font-weight: 700;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-bottom: 5px;
+    }
+
+    .field input[type=text],
+    .field input[type=number],
+    .field textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 44px;
+    }
+
+    .chip-set {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 100px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chip.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--black);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    .modal-actions-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .field-error {
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    @media (max-width:640px) {
+      .wrap {
+        padding: 18px 14px 40px;
+      }
+
+      header.board-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .card {
+        flex-basis: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="overlay" id="authOverlay" style="display:none;">
+    <div class="modal" style="max-width:340px;">
+      <h2>Sprint Board</h2>
+      <form id="authForm">
+        <div class="field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" autocomplete="current-password" required />
+        </div>
+        <div class="field-error" id="authError" style="display:none;">Incorrect password.</div>
+        <button type="submit" class="btn btn-primary" id="authSubmit" style="width:100%;">Enter</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header class="board-head">
+      <div class="title-block">
+        <h1>Sprint Board</h1>
+        <div class="sprint-label-row">
+          <input class="sprint-label" id="sprintLabel" type="text" placeholder="e.g. Sprint: Sep 8–19" />
+        </div>
+      </div>
+      <div class="head-actions">
+        <span class="sync-note" id="syncNote">Loading…</span>
+        <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
+        <button class="btn btn-primary" id="addBtn">+ New work</button>
+      </div>
+    </header>
+
+    <div id="clientSection"></div>
+
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="overlay" id="overlay" style="display:none;">
+    <div class="modal">
+      <h2 id="modalTitle">New work</h2>
+      <div class="field">
+        <label for="f-title">Title</label>
+        <input type="text" id="f-title" placeholder="e.g. Rewrite grants landing page" />
+        <div class="field-error" id="titleError">A title is required.</div>
+      </div>
+      <div class="field">
+        <label>Collaborators</label>
+        <div class="chip-set" id="collabChips"></div>
+      </div>
+      <div class="field">
+        <label for="f-hours">Estimated hours</label>
+        <input type="number" id="f-hours" min="0" step="0.5" placeholder="e.g. 6" />
+      </div>
+      <div class="field">
+        <label for="f-client">Client</label>
+        <input type="text" id="f-client" placeholder="e.g. Enlight Foundation" />
+      </div>
+      <div class="field">
+        <label for="f-notes">Notes / deadline</label>
+        <textarea id="f-notes" placeholder="e.g. Needs to be live before the board meeting on the 18th"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="deleteBtn"
+          style="display:none; color:var(--danger); border-color:var(--danger);">Delete</button>
+        <div class="modal-actions-right">
+          <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+          <button class="btn btn-primary" id="saveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TEAM = ["Ambika", "Jamie", "Jenn", "Kristen", "Marie", "Miranda", "Rollo"];
+    const LANE_COLORS = {
+      "Ambika": "#173538", "Jamie": "#2E5A5F", "Jenn": "#3F7379",
+      "Kristen": "#568D93", "Marie": "#8AC6CC", "Miranda": "#AEDBDF", "Rollo": "#111111"
+    };
+    const STORAGE_KEY = "sjn-sprint-board";
+    const POLL_MS = 8000;
+
+    // Paste the /exec URL from your Apps Script deployment here:
+    const API_URL = "https://script.google.com/macros/s/AKfycbxQmu1xggAhSrS3QwTV0QkSRYOmrP5EIooLBm5y4wuAe4-qgeSwSKFrQXsL-UCLzrdfyw/exec";
+
+    // Drop-in replacement for the Claude-artifact window.storage API,
+    // backed by the Google Sheet via Apps Script instead. The password is
+    // sent with every request; the sheet's real content never comes back
+    // without it.
+    let boardPassword = "";
+
+    const storage = {
+      async get(key, shared) {
+        const url = API_URL + "?pw=" + encodeURIComponent(boardPassword);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Fetch failed: " + res.status);
+        const data = await res.json();
+        if (!data.ok) throw new Error("unauthorized");
+        return {key, value: data.value, shared};
+      },
+      async set(key, value, shared) {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          // text/plain avoids a CORS preflight that Apps Script doesn't handle
+          headers: {"Content-Type": "text/plain;charset=utf-8"},
+          body: JSON.stringify({pw: boardPassword, value})
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data.ok) return null;
+        return {key, value, shared};
+      }
+    };
+    window.storage = storage;
+    const SEED_CLIENTS = [
+      {
+        name: "ACT", theirGoal: "To be better communicators for their work and communities.",
+        ourGoal: "To get a phase 2 that would help us push forward participatory mapping."
+      },
+      {
+        name: "Archstone", theirGoal: "Archstone wants to find the mechanisms that galvanize older adults to recognize their political power.",
+        ourGoal: "Develop narratives for policy and political change."
+      },
+      {
+        name: "Bana Pele", theirGoal: "Bana Pele wants the government of South Africa to be behind their work. SIL is there to create the compelling narrative.",
+        ourGoal: ""
+      },
+      {
+        name: "Enlight", theirGoal: "Enlight wants funders in the youth mental health space to vet and increase the programmatic capacity of their grantees.",
+        ourGoal: "Build awesome materials for funders that we can show other potential clients (current priority). We want to have policy change to demonstrate our impact (in progress). We want to show that we can bring people together, e.g. practioners in working groups (done!)."
+      },
+      {
+        name: "ERC", theirGoal: "ERC wants to showcase impact of the fellowship to funders so they can get more funding for the program. [TBD - How important are the partners in the ecosystems? Our research shows they are not integral.]",
+        ourGoal: "Produce something public-facing, so that we can get a renewal."
+      },
+      {
+        name: "IKEA Comms", theirGoal: "To show philanthropies CAN and SHOULD do public campaigns to bring more narrative power to work.",
+        ourGoal: "To be THE point person for bringing voice to a campaign via written, visual, and interviews."
+      },
+      {name: "Levers for Change", theirGoal: "", ourGoal: ""},
+      {
+        name: "LIF", theirGoal: "To raise momentum around the new Vision Action Fund",
+        ourGoal: "To produce funder facing media, and lead on media buys."
+      },
+      {
+        name: "NEID", theirGoal: "NEID wants to be a convener in the sector. They want to see retreat participants deciding to convene/cofund afterwards. SIL is there to create the container for that.",
+        ourGoal: "Build SIL's reputation among funders in the NEID network."
+      },
+      {name: "Rippel", theirGoal: "", ourGoal: ""}
+    ];
+
+    let state = {sprintLabel: "", tickets: [], capacities: {}, clients: [], clientsSeeded: false};
+    let editingId = null; // null = new ticket
+    let saving = false;
+    let dragTicketId = null;
+    let completedCollapsed = false;
+    let clientsCollapsed = true;
+    let inlineEditing = false;
+
+    const boardEl = document.getElementById("board");
+    const syncNote = document.getElementById("syncNote");
+    const overlay = document.getElementById("overlay");
+    const sprintLabelInput = document.getElementById("sprintLabel");
+
+    function uid() {return "t_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);}
+
+    function sumHours(tickets) {
+      return tickets.reduce((sum, t) => sum + (Number(t.hours) || 0), 0);
+    }
+
+    function laneList() {
+      return [{key: null, name: "New work", intake: true}].concat(
+        TEAM.map(n => ({key: n, name: n, intake: false}))
+      );
+    }
+
+    async function loadState(showLoading) {
+      if (showLoading) syncNote.textContent = "Loading…";
+      let seededJustNow = false;
+      try {
+        const res = await window.storage.get(STORAGE_KEY, true);
+        if (res && res.value) {
+          const parsed = JSON.parse(res.value);
+          state = {
+            sprintLabel: parsed.sprintLabel || "", tickets: parsed.tickets || [],
+            capacities: parsed.capacities || {}, clients: parsed.clients || [],
+            clientsSeeded: !!parsed.clientsSeeded
+          };
+        }
+        syncNote.textContent = "Synced " + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      } catch (e) {
+        // key not found yet is normal on first run
+        syncNote.textContent = "Synced " + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      }
+      if (!state.clientsSeeded && state.clients.length === 0) {
+        state.clients = SEED_CLIENTS.map(c => ({id: uid(), name: c.name, theirGoal: c.theirGoal, ourGoal: c.ourGoal}));
+        state.clientsSeeded = true;
+        clientsCollapsed = false;
+        seededJustNow = true;
+      }
+      sprintLabelInput.value = state.sprintLabel;
+      render();
+      if (seededJustNow) saveState();
+    }
+
+    async function saveState() {
+      saving = true;
+      syncNote.textContent = "Saving…";
+      try {
+        const result = await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+        if (!result) {syncNote.textContent = "Save failed — check connection";}
+        else {syncNote.textContent = "Saved " + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});}
+      } catch (e) {
+        syncNote.textContent = "Save failed — check connection";
+      }
+      saving = false;
+    }
+
+    function render() {
+      renderClientsSection();
+      boardEl.innerHTML = "";
+      laneList().forEach(lane => {
+        const laneTickets = state.tickets.filter(t => t.assignee === lane.key && !t.completed);
+        const laneEl = document.createElement("div");
+        laneEl.className = "lane" + (lane.intake ? " intake" : "");
+
+        const head = document.createElement("div");
+        head.className = "lane-head";
+        if (!lane.intake) {
+          const dot = document.createElement("span");
+          dot.className = "lane-dot";
+          dot.style.background = LANE_COLORS[lane.name];
+          head.appendChild(dot);
+        }
+        const nameEl = document.createElement("span");
+        nameEl.className = "lane-name";
+        nameEl.textContent = lane.name;
+        head.appendChild(nameEl);
+        const countEl = document.createElement("span");
+        countEl.className = "lane-count";
+        countEl.textContent = laneTickets.length ? "· " + laneTickets.length : "";
+        head.appendChild(countEl);
+        if (lane.intake) {
+          const addBtn = document.createElement("button");
+          addBtn.className = "btn btn-primary";
+          addBtn.textContent = "+ Add";
+          addBtn.onclick = () => openModal(null);
+          head.appendChild(addBtn);
+          const totalHours = sumHours(laneTickets);
+          if (totalHours > 0) {
+            const note = document.createElement("span");
+            note.className = "intake-hours";
+            note.textContent = totalHours + "h unassigned";
+            head.insertBefore(note, addBtn);
+          }
+        } else {
+          const capWrap = document.createElement("div");
+          capWrap.className = "capacity-wrap";
+          const capInput = document.createElement("input");
+          capInput.type = "number"; capInput.min = "0"; capInput.step = "0.5";
+          capInput.placeholder = "hrs";
+          capInput.value = state.capacities[lane.name] ?? "";
+          capInput.title = "Available hours for this sprint";
+          capInput.onchange = () => {
+            state.capacities[lane.name] = capInput.value === "" ? "" : Number(capInput.value);
+            render(); saveState();
+          };
+          capWrap.appendChild(document.createTextNode("Available hours:"));
+          capWrap.appendChild(capInput);
+          head.appendChild(capWrap);
+
+          const assignedAll = sumHours(state.tickets.filter(t => t.assignee === lane.name));
+          const cap = state.capacities[lane.name];
+          const summary = document.createElement("span");
+          const hasCap = cap !== "" && cap !== undefined && cap !== null;
+          summary.className = "hours-summary" + (hasCap && assignedAll > Number(cap) ? " over" : "");
+          summary.textContent = hasCap ? ("Assigned: " + assignedAll + " / " + cap + "h") : ("Assigned: " + assignedAll + "h");
+          summary.title = "Total hours assigned this sprint, including completed work";
+          head.appendChild(summary);
+        }
+        laneEl.appendChild(head);
+
+        const body = document.createElement("div");
+        body.className = "lane-body";
+        body.dataset.laneKey = lane.key === null ? "" : lane.key;
+        body.addEventListener("dragover", e => {e.preventDefault(); body.classList.add("drop-target");});
+        body.addEventListener("dragleave", () => body.classList.remove("drop-target"));
+        body.addEventListener("drop", e => {
+          e.preventDefault();
+          body.classList.remove("drop-target");
+          if (dragTicketId) {
+            assignTicket(dragTicketId, lane.key);
+            dragTicketId = null;
+          }
+        });
+
+        laneTickets.forEach(t => body.appendChild(renderCard(t, lane)));
+        laneEl.appendChild(body);
+        boardEl.appendChild(laneEl);
+      });
+
+      renderCompletedSection();
+    }
+
+    function renderCompletedSection() {
+      const existing = document.getElementById("completedSection");
+      if (existing) existing.remove();
+
+      const completedTickets = state.tickets.filter(t => t.completed);
+      const section = document.createElement("div");
+      section.className = "completed-section";
+      section.id = "completedSection";
+
+      const head = document.createElement("div");
+      head.className = "completed-head" + (completedCollapsed ? " collapsed" : "");
+      head.innerHTML = '<span class="chevron">▾</span><h3>Completed · ' + completedTickets.length + '</h3>';
+      head.onclick = () => {completedCollapsed = !completedCollapsed; render();};
+      section.appendChild(head);
+
+      const body = document.createElement("div");
+      body.className = "completed-body" + (completedCollapsed ? " hidden" : "");
+      completedTickets.forEach(t => {
+        const laneMeta = t.assignee ? {name: t.assignee, intake: false} : {name: "New work", intake: true};
+        body.appendChild(renderCard(t, laneMeta, true));
+      });
+      section.appendChild(body);
+      boardEl.appendChild(section);
+    }
+
+    function renderCard(t, lane, inCompletedSection) {
+      const card = document.createElement("div");
+      card.className = "card" + (inCompletedSection ? " completed-card" : "");
+      card.style.setProperty("--card-color", lane.intake ? "#8AC6CC" : LANE_COLORS[lane.name]);
+      card.draggable = true;
+      card.addEventListener("dragstart", () => {dragTicketId = t.id;});
+
+      const top = document.createElement("div");
+      top.className = "card-top";
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.className = "card-check";
+      check.checked = !!t.completed;
+      check.title = "Mark complete";
+      check.onclick = (e) => {e.stopPropagation(); toggleComplete(t.id);};
+      top.appendChild(check);
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "card-title";
+      titleEl.textContent = t.title;
+      titleEl.onclick = () => openModal(t.id);
+      top.appendChild(titleEl);
+
+      const del = document.createElement("button");
+      del.className = "card-del";
+      del.textContent = "✕";
+      del.title = "Delete";
+      del.onclick = (e) => {e.stopPropagation(); deleteTicket(t.id);};
+      top.appendChild(del);
+      card.appendChild(top);
+
+      const meta = document.createElement("div");
+      meta.className = "card-meta";
+      if (t.client) {
+        const p = document.createElement("span"); p.className = "pill"; p.textContent = t.client; meta.appendChild(p);
+      }
+      if (t.hours !== "" && t.hours !== null && t.hours !== undefined) {
+        const p = document.createElement("span"); p.className = "pill hours"; p.textContent = t.hours + "h"; meta.appendChild(p);
+      }
+      card.appendChild(meta);
+
+      if (inCompletedSection) {
+        const who = document.createElement("div");
+        who.className = "card-assignee-pill";
+        who.textContent = lane.intake ? "Was unassigned" : "Was assigned: " + lane.name;
+        card.appendChild(who);
+      }
+
+      if (t.collaborators && t.collaborators.length) {
+        const c = document.createElement("div");
+        c.className = "card-collabs";
+        c.textContent = t.collaborators.join(", ");
+        card.appendChild(c);
+      }
+
+      if (t.notes) {
+        const n = document.createElement("div");
+        n.className = "card-notes";
+        n.textContent = t.notes;
+        card.appendChild(n);
+      }
+
+      const assignWrap = document.createElement("div");
+      assignWrap.className = "card-assign";
+      const select = document.createElement("select");
+      const optNone = document.createElement("option");
+      optNone.value = ""; optNone.textContent = "New work (unassigned)";
+      select.appendChild(optNone);
+      TEAM.forEach(n => {
+        const opt = document.createElement("option");
+        opt.value = n; opt.textContent = "Assign: " + n;
+        select.appendChild(opt);
+      });
+      select.value = t.assignee || "";
+      select.onclick = (e) => e.stopPropagation();
+      select.onchange = () => assignTicket(t.id, select.value || null);
+      assignWrap.appendChild(select);
+      card.appendChild(assignWrap);
+
+      return card;
+    }
+
+    function renderClientsSection() {
+      const container = document.getElementById("clientSection");
+      container.innerHTML = "";
+
+      const section = document.createElement("div");
+      section.className = "client-section";
+
+      const head = document.createElement("div");
+      head.className = "client-head" + (clientsCollapsed ? " collapsed" : "");
+      head.innerHTML = '<span class="chevron">▾</span><h3>Client context</h3>';
+      head.onclick = (e) => {
+        if (e.target.closest(".btn")) return;
+        clientsCollapsed = !clientsCollapsed; render();
+      };
+      const addBtn = document.createElement("button");
+      addBtn.className = "btn btn-ghost";
+      addBtn.textContent = "+ Add client";
+      addBtn.onclick = (e) => {
+        e.stopPropagation();
+        state.clients.push({id: uid(), name: "", ourGoal: "", theirGoal: ""});
+        clientsCollapsed = false;
+        render(); saveState();
+        const rows = document.querySelectorAll(".client-name-col");
+        if (rows.length) rows[rows.length - 1].focus();
+      };
+      head.appendChild(addBtn);
+      section.appendChild(head);
+
+      const body = document.createElement("div");
+      body.className = "client-body" + (clientsCollapsed ? " hidden" : "");
+
+      const table = document.createElement("table");
+      table.className = "client-table";
+      table.innerHTML = '<thead><tr><th>Client</th><th>Client goal</th><th>SIL goal</th><th></th></tr></thead>';
+      const tbody = document.createElement("tbody");
+
+      if (state.clients.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = '<td colspan="4" style="color:var(--ink-soft); font-style:italic;">No clients added yet</td>';
+        tbody.appendChild(tr);
+      }
+
+      state.clients.forEach(c => {
+        const tr = document.createElement("tr");
+
+        const nameTd = document.createElement("td");
+        nameTd.className = "client-name-col";
+        nameTd.contentEditable = "true";
+        nameTd.dataset.placeholder = "Client name";
+        nameTd.textContent = c.name;
+        nameTd.onblur = () => {c.name = nameTd.textContent.trim(); inlineEditing = false; saveState();};
+        nameTd.onfocus = () => {inlineEditing = true;};
+        tr.appendChild(nameTd);
+
+        const theirTd = document.createElement("td");
+        theirTd.className = "client-goal-col";
+        theirTd.contentEditable = "true";
+        theirTd.dataset.placeholder = "What the client wants from this partnership";
+        theirTd.textContent = c.theirGoal;
+        theirTd.onblur = () => {c.theirGoal = theirTd.textContent.trim(); inlineEditing = false; saveState();};
+        theirTd.onfocus = () => {inlineEditing = true;};
+        tr.appendChild(theirTd);
+
+        const ourTd = document.createElement("td");
+        ourTd.className = "client-goal-col";
+        ourTd.contentEditable = "true";
+        ourTd.dataset.placeholder = "What SIL wants from this partnership";
+        ourTd.textContent = c.ourGoal;
+        ourTd.onblur = () => {c.ourGoal = ourTd.textContent.trim(); inlineEditing = false; saveState();};
+        ourTd.onfocus = () => {inlineEditing = true;};
+        tr.appendChild(ourTd);
+
+        const delTd = document.createElement("td");
+        delTd.className = "client-del-col";
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "✕";
+        delBtn.title = "Remove client";
+        delBtn.onclick = () => {
+          if (!confirm("Remove this client from the list?")) return;
+          state.clients = state.clients.filter(x => x.id !== c.id);
+          render(); saveState();
+        };
+        delTd.appendChild(delBtn);
+        tr.appendChild(delTd);
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      body.appendChild(table);
+      section.appendChild(body);
+      container.appendChild(section);
+    }
+
+    function findTicket(id) {return state.tickets.find(t => t.id === id);}
+
+    function toggleComplete(id) {
+      const t = findTicket(id); if (!t) return;
+      t.completed = !t.completed;
+      render(); saveState();
+    }
+
+    function assignTicket(id, assignee) {
+      const t = findTicket(id); if (!t) return;
+      t.assignee = assignee;
+      render(); saveState();
+    }
+
+    function deleteTicket(id) {
+      if (!confirm("Delete this ticket? This can't be undone.")) return;
+      state.tickets = state.tickets.filter(t => t.id !== id);
+      render(); saveState();
+    }
+
+    // Modal handling
+    const modalTitle = document.getElementById("modalTitle");
+    const fTitle = document.getElementById("f-title");
+    const fHours = document.getElementById("f-hours");
+    const fClient = document.getElementById("f-client");
+    const fNotes = document.getElementById("f-notes");
+    const collabChips = document.getElementById("collabChips");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const titleError = document.getElementById("titleError");
+    let selectedCollabs = [];
+
+    function buildChips() {
+      collabChips.innerHTML = "";
+      TEAM.forEach(n => {
+        const chip = document.createElement("span");
+        chip.className = "chip" + (selectedCollabs.includes(n) ? " selected" : "");
+        chip.textContent = n;
+        chip.onclick = () => {
+          if (selectedCollabs.includes(n)) selectedCollabs = selectedCollabs.filter(x => x !== n);
+          else selectedCollabs.push(n);
+          buildChips();
+        };
+        collabChips.appendChild(chip);
+      });
+    }
+
+    function openModal(id) {
+      editingId = id;
+      titleError.style.display = "none";
+      if (id) {
+        const t = findTicket(id);
+        modalTitle.textContent = "Edit work";
+        fTitle.value = t.title;
+        fHours.value = t.hours ?? "";
+        fClient.value = t.client || "";
+        fNotes.value = t.notes || "";
+        selectedCollabs = (t.collaborators || []).slice();
+        deleteBtn.style.display = "inline-block";
+      } else {
+        modalTitle.textContent = "New work";
+        fTitle.value = ""; fHours.value = ""; fClient.value = ""; fNotes.value = "";
+        selectedCollabs = [];
+        deleteBtn.style.display = "none";
+      }
+      buildChips();
+      overlay.style.display = "flex";
+      fTitle.focus();
+    }
+
+    function closeModal() {overlay.style.display = "none"; editingId = null;}
+
+    document.getElementById("addBtn").onclick = () => openModal(null);
+    document.getElementById("cancelBtn").onclick = closeModal;
+    overlay.addEventListener("click", (e) => {if (e.target === overlay) closeModal();});
+
+    deleteBtn.onclick = () => {
+      if (editingId) {closeModal(); deleteTicket(editingId);}
+    };
+
+    document.getElementById("saveBtn").onclick = () => {
+      const title = fTitle.value.trim();
+      if (!title) {titleError.style.display = "block"; return;}
+      const hoursVal = fHours.value === "" ? "" : Number(fHours.value);
+      if (editingId) {
+        const t = findTicket(editingId);
+        t.title = title; t.hours = hoursVal; t.client = fClient.value.trim();
+        t.notes = fNotes.value.trim(); t.collaborators = selectedCollabs.slice();
+      } else {
+        state.tickets.push({
+          id: uid(), title, hours: hoursVal, client: fClient.value.trim(),
+          notes: fNotes.value.trim(), collaborators: selectedCollabs.slice(),
+          assignee: null, completed: false
+        });
+      }
+      closeModal(); render(); saveState();
+    };
+
+    sprintLabelInput.addEventListener("change", () => {
+      state.sprintLabel = sprintLabelInput.value;
+      saveState();
+    });
+
+    document.getElementById("refreshBtn").onclick = () => loadState(true);
+
+    // Poll for teammates' changes
+    function startApp() {
+      loadState(true);
+      setInterval(() => {if (!saving && !inlineEditing && overlay.style.display === "none") loadState(false);}, POLL_MS);
+    }
+
+    async function tryAuth(pw) {
+      boardPassword = pw;
+      try {
+        const res = await fetch(API_URL + "?pw=" + encodeURIComponent(pw));
+        const data = await res.json();
+        return !!(data && data.ok);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function initAuth() {
+      const authOverlay = document.getElementById("authOverlay");
+      const authForm = document.getElementById("authForm");
+      const authInput = document.getElementById("authPassword");
+      const authError = document.getElementById("authError");
+      const authSubmit = document.getElementById("authSubmit");
+
+      const saved = sessionStorage.getItem("sprintBoardPassword");
+      if (saved) {
+        const ok = await tryAuth(saved);
+        if (ok) {startApp(); return;}
+        sessionStorage.removeItem("sprintBoardPassword");
+      }
+
+      authOverlay.style.display = "flex";
+      authInput.focus();
+
+      authForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        authError.style.display = "none";
+        authSubmit.disabled = true;
+        authSubmit.textContent = "Checking…";
+        const ok = await tryAuth(authInput.value);
+        if (ok) {
+          sessionStorage.setItem("sprintBoardPassword", authInput.value);
+          authOverlay.style.display = "none";
+          startApp();
+        } else {
+          authError.style.display = "block";
+          authSubmit.disabled = false;
+          authSubmit.textContent = "Enter";
+        }
+      });
+    }
+
+    initAuth();
+  </script>
+</body>
+
+</html>
