@@ -1098,7 +1098,7 @@
         const theirTd = document.createElement("td");
         theirTd.className = "client-goal-col";
         theirTd.contentEditable = "true";
-        theirTd.dataset.placeholder = "What the client wants from this partnership";
+        theirTd.dataset.placeholder = "What does the client want?";
         theirTd.textContent = c.theirGoal;
         theirTd.onblur = () => {c.theirGoal = theirTd.textContent.trim(); inlineEditing = false; saveState();};
         theirTd.onfocus = () => {inlineEditing = true;};
@@ -1107,7 +1107,7 @@
         const ourTd = document.createElement("td");
         ourTd.className = "client-goal-col";
         ourTd.contentEditable = "true";
-        ourTd.dataset.placeholder = "What SIL wants from this partnership";
+        ourTd.dataset.placeholder = "What do we want?";
         ourTd.textContent = c.ourGoal;
         ourTd.onblur = () => {c.ourGoal = ourTd.textContent.trim(); inlineEditing = false; saveState();};
         ourTd.onfocus = () => {inlineEditing = true;};
