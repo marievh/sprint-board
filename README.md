@@ -7,6 +7,11 @@ client context.
 ## Live site
 https://sprint.solutionsinsightslab.org
 
+## Previewing and testing changes
+ You don't need to push to GitHub just to see if a change works. Right-click index.html in VS Code's file explorer and choose "Reveal in File Explorer" (or Finder on Mac), then double-click the file to open it directly in your browser. Edit, save, refresh the browser tab — repeat as needed.
+
+One thing to know: even when testing locally like this, it's still talking to your real Google Sheet through the real Apps Script URL — so any tickets or edits you make while testing land in the actual shared data, not a sandbox copy. Fine for small tweaks, just worth remembering if you're testing something experimental.
+
 ## How it works
 - The board's data (tickets, capacities, client notes) lives in a
   Google Sheet, not in this code. The link to the Google Sheet is here: https://docs.google.com/spreadsheets/d/1fXcuKuEDdns2xqJAbgsYw3FgOtzVPIJQgy2MrZjuUUI/edit?gid=0#gid=0
