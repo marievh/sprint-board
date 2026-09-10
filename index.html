@@ -1090,7 +1090,7 @@
 
     async function loadState(showLoading) {
       if (showLoading) syncNote.textContent = "Loading…";
-      let needsSave = false;
+      let fetchOk = false;
       try {
         const res = await window.storage.get(STORAGE_KEY, true);
         if (res && res.value) {
@@ -1101,11 +1101,17 @@
             clientsSeeded: !!parsed.clientsSeeded
           };
         }
+        fetchOk = true;
         syncNote.textContent = "Synced " + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
       } catch (e) {
-        // key not found yet is normal on first run
-        syncNote.textContent = "Synced " + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        syncNote.textContent = "Couldn't load — check your connection (nothing changed)";
       }
+      // If the fetch failed, stop here. Do NOT touch, seed, or save anything —
+      // that was the cause of a real data-loss bug: a failed load used to look
+      // like an empty board and would overwrite real data with demo defaults.
+      if (!fetchOk) return;
+
+      let needsSave = false;
       if (!state.clientsSeeded && state.clients.length === 0) {
         state.clients = SEED_CLIENTS.map((c, i) => {
           const p = paletteColorFor(i);
