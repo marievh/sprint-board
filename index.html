@@ -240,9 +240,9 @@
 
     .lane-body {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       padding: 12px 16px;
-      overflow-x: auto;
       min-height: 88px;
     }
 
@@ -580,6 +580,43 @@
       color: var(--ink);
     }
 
+    .assignee-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .assignee-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .assignee-row span {
+      flex: 1;
+    }
+
+    .assignee-row input[type=number] {
+      width: 64px;
+      font-family: inherit;
+      font-size: 12.5px;
+      padding: 5px 7px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .assignee-row input[type=number]:disabled {
+      opacity: .4;
+    }
+
     /* Modal */
     .overlay {
       position: fixed;
@@ -887,8 +924,8 @@
         <div class="chip-set" id="clientChips"></div>
       </div>
       <div class="field">
-        <label for="f-hours">Estimated hours</label>
-        <input type="number" id="f-hours" min="0" step="0.5" placeholder="e.g. 6" />
+        <label>Assign & hours</label>
+        <div class="assignee-rows" id="assigneeRows"></div>
       </div>
       <div class="field">
         <label for="f-notes">Notes / deadline</label>
@@ -1038,10 +1075,6 @@
 
     function uid() {return "t_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);}
 
-    function sumHours(tickets) {
-      return tickets.reduce((sum, t) => sum + (Number(t.hours) || 0), 0);
-    }
-
     function laneList() {
       return [{key: null, name: "New tasks", intake: true}].concat(
         TEAM.map(n => ({key: n, name: n, intake: false}))
@@ -1089,6 +1122,16 @@
           needsSave = true;
         }
       });
+      // Migrate tasks from the old single-assignee model (assignee + hours)
+      // to multi-assignee with hours allocated per person.
+      state.tickets.forEach(t => {
+        if (!t.assignments) {
+          t.assignments = t.assignee ? [{name: t.assignee, hours: t.hours ?? ""}] : [];
+          delete t.assignee;
+          delete t.hours;
+          needsSave = true;
+        }
+      });
       sprintLabelInput.value = state.sprintLabel;
       render();
       if (needsSave) saveState();
@@ -1111,7 +1154,9 @@
       renderClientsSection();
       boardEl.innerHTML = "";
       laneList().forEach(lane => {
-        const laneTickets = state.tickets.filter(t => t.assignee === lane.key && !t.completed);
+        const laneTickets = lane.intake
+          ? state.tickets.filter(t => (t.assignments || []).length === 0 && !t.completed)
+          : state.tickets.filter(t => assignmentFor(t, lane.name) && !t.completed);
         const laneEl = document.createElement("div");
         laneEl.className = "lane" + (lane.intake ? " intake" : "");
 
@@ -1137,13 +1182,6 @@
           addBtn.textContent = "+ Add";
           addBtn.onclick = () => openModal(null);
           head.appendChild(addBtn);
-          const totalHours = sumHours(laneTickets);
-          if (totalHours > 0) {
-            const note = document.createElement("span");
-            note.className = "intake-hours";
-            note.textContent = totalHours + "h unassigned";
-            head.insertBefore(note, addBtn);
-          }
         } else {
           const capWrap = document.createElement("div");
           capWrap.className = "capacity-wrap";
@@ -1159,7 +1197,7 @@
           capWrap.appendChild(document.createTextNode("Available hours:"));
           capWrap.appendChild(capInput);
 
-          const assignedAll = sumHours(state.tickets.filter(t => t.assignee === lane.name));
+          const assignedAll = personTotalHours(lane.name);
           const cap = state.capacities[lane.name];
           const summary = document.createElement("span");
           const hasCap = cap !== "" && cap !== undefined && cap !== null;
@@ -1184,7 +1222,11 @@
           e.preventDefault();
           body.classList.remove("drop-target");
           if (dragTicketId) {
-            assignTicket(dragTicketId, lane.key);
+            if (lane.intake) {
+              unassignAll(dragTicketId);
+            } else {
+              addAssignee(dragTicketId, lane.name);
+            }
             dragTicketId = null;
           }
         });
@@ -1215,8 +1257,7 @@
       const body = document.createElement("div");
       body.className = "completed-body" + (completedCollapsed ? " hidden" : "");
       completedTickets.forEach(t => {
-        const laneMeta = t.assignee ? {name: t.assignee, intake: false} : {name: "New tasks", intake: true};
-        body.appendChild(renderCard(t, laneMeta, true));
+        body.appendChild(renderCard(t, null, true));
       });
       section.appendChild(body);
       boardEl.appendChild(section);
@@ -1271,16 +1312,38 @@
         }
         meta.appendChild(p);
       }
-      if (t.hours !== "" && t.hours !== null && t.hours !== undefined) {
-        const p = document.createElement("span"); p.className = "pill hours"; p.textContent = t.hours + "h"; meta.appendChild(p);
+
+      const assignments = t.assignments || [];
+      let hoursLabel = "";
+      if (inCompletedSection) {
+        const total = assignments.reduce((s, a) => s + (Number(a.hours) || 0), 0);
+        if (total > 0) hoursLabel = total + "h";
+      } else if (lane && !lane.intake) {
+        const mine = assignmentFor(t, lane.name);
+        if (mine && mine.hours !== "" && mine.hours !== null && mine.hours !== undefined) {
+          hoursLabel = mine.hours + "h";
+        }
+      }
+      if (hoursLabel) {
+        const p = document.createElement("span"); p.className = "pill hours"; p.textContent = hoursLabel; meta.appendChild(p);
       }
       card.appendChild(meta);
 
       if (inCompletedSection) {
         const who = document.createElement("div");
         who.className = "card-assignee-pill";
-        who.textContent = lane.intake ? "Was unassigned" : "Was assigned: " + lane.name;
+        who.textContent = assignments.length
+          ? "Was assigned: " + assignments.map(a => a.name + (a.hours ? " (" + a.hours + "h)" : "")).join(", ")
+          : "Was unassigned";
         card.appendChild(who);
+      } else if (lane && !lane.intake && assignments.length > 1) {
+        const others = assignments.filter(a => a.name !== lane.name);
+        if (others.length) {
+          const also = document.createElement("div");
+          also.className = "card-assignee-pill";
+          also.textContent = "Also: " + others.map(a => a.name + (a.hours ? " (" + a.hours + "h)" : "")).join(", ");
+          card.appendChild(also);
+        }
       }
 
       if (t.notes) {
@@ -1289,23 +1352,6 @@
         n.textContent = t.notes;
         card.appendChild(n);
       }
-
-      const assignWrap = document.createElement("div");
-      assignWrap.className = "card-assign";
-      const select = document.createElement("select");
-      const optNone = document.createElement("option");
-      optNone.value = ""; optNone.textContent = "New tasks (unassigned)";
-      select.appendChild(optNone);
-      TEAM.forEach(n => {
-        const opt = document.createElement("option");
-        opt.value = n; opt.textContent = "Assign: " + n;
-        select.appendChild(opt);
-      });
-      select.value = t.assignee || "";
-      select.onclick = (e) => e.stopPropagation();
-      select.onchange = () => assignTicket(t.id, select.value || null);
-      assignWrap.appendChild(select);
-      card.appendChild(assignWrap);
 
       return card;
     }
@@ -1481,15 +1527,37 @@
 
     function findTicket(id) {return state.tickets.find(t => t.id === id);}
 
+    function assignmentFor(t, name) {
+      return (t.assignments || []).find(a => a.name === name) || null;
+    }
+
+    function personTotalHours(name) {
+      let sum = 0;
+      state.tickets.forEach(t => {
+        const a = assignmentFor(t, name);
+        if (a) sum += Number(a.hours) || 0;
+      });
+      return sum;
+    }
+
     function toggleComplete(id) {
       const t = findTicket(id); if (!t) return;
       t.completed = !t.completed;
       render(); saveState();
     }
 
-    function assignTicket(id, assignee) {
+    function addAssignee(id, name) {
       const t = findTicket(id); if (!t) return;
-      t.assignee = assignee;
+      if (!t.assignments) t.assignments = [];
+      if (!t.assignments.some(a => a.name === name)) {
+        t.assignments.push({name, hours: ""});
+        render(); saveState();
+      }
+    }
+
+    function unassignAll(id) {
+      const t = findTicket(id); if (!t) return;
+      t.assignments = [];
       render(); saveState();
     }
 
@@ -1502,12 +1570,13 @@
     // Modal handling
     const modalTitle = document.getElementById("modalTitle");
     const fTitle = document.getElementById("f-title");
-    const fHours = document.getElementById("f-hours");
     const fNotes = document.getElementById("f-notes");
     const clientChipsEl = document.getElementById("clientChips");
+    const assigneeRowsEl = document.getElementById("assigneeRows");
     const deleteBtn = document.getElementById("deleteBtn");
     const titleError = document.getElementById("titleError");
     let selectedClient = null;
+    let selectedAssignments = {}; // { personName: hoursString }
 
     function buildChips() {
       clientChipsEl.innerHTML = "";
@@ -1533,6 +1602,48 @@
       });
     }
 
+    function buildAssigneeRows() {
+      assigneeRowsEl.innerHTML = "";
+      TEAM.forEach(name => {
+        const row = document.createElement("label");
+        row.className = "assignee-row";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Object.prototype.hasOwnProperty.call(selectedAssignments, name);
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = name;
+
+        const hoursInput = document.createElement("input");
+        hoursInput.type = "number"; hoursInput.min = "0"; hoursInput.step = "0.5";
+        hoursInput.placeholder = "hrs";
+        hoursInput.disabled = !checkbox.checked;
+        hoursInput.value = selectedAssignments[name] ?? "";
+        hoursInput.onclick = (e) => e.stopPropagation();
+        hoursInput.onchange = () => {
+          selectedAssignments[name] = hoursInput.value;
+        };
+
+        checkbox.onchange = () => {
+          if (checkbox.checked) {
+            selectedAssignments[name] = "";
+            hoursInput.disabled = false;
+            hoursInput.focus();
+          } else {
+            delete selectedAssignments[name];
+            hoursInput.disabled = true;
+            hoursInput.value = "";
+          }
+        };
+
+        row.appendChild(checkbox);
+        row.appendChild(nameSpan);
+        row.appendChild(hoursInput);
+        assigneeRowsEl.appendChild(row);
+      });
+    }
+
     function openModal(id) {
       editingId = id;
       titleError.style.display = "none";
@@ -1540,17 +1651,20 @@
         const t = findTicket(id);
         modalTitle.textContent = "Edit task";
         fTitle.value = t.title;
-        fHours.value = t.hours ?? "";
         fNotes.value = t.notes || "";
         selectedClient = t.client || null;
+        selectedAssignments = {};
+        (t.assignments || []).forEach(a => {selectedAssignments[a.name] = a.hours ?? "";});
         deleteBtn.style.display = "inline-block";
       } else {
         modalTitle.textContent = "New task";
-        fTitle.value = ""; fHours.value = ""; fNotes.value = "";
+        fTitle.value = ""; fNotes.value = "";
         selectedClient = null;
+        selectedAssignments = {};
         deleteBtn.style.display = "none";
       }
       buildChips();
+      buildAssigneeRows();
       overlay.style.display = "flex";
       fTitle.focus();
     }
@@ -1568,16 +1682,18 @@
     document.getElementById("saveBtn").onclick = () => {
       const title = fTitle.value.trim();
       if (!title) {titleError.style.display = "block"; return;}
-      const hoursVal = fHours.value === "" ? "" : Number(fHours.value);
+      const assignments = Object.entries(selectedAssignments).map(([name, hours]) => ({
+        name, hours: hours === "" ? "" : Number(hours)
+      }));
       if (editingId) {
         const t = findTicket(editingId);
-        t.title = title; t.hours = hoursVal; t.client = selectedClient || "";
-        t.notes = fNotes.value.trim();
+        t.title = title; t.client = selectedClient || "";
+        t.notes = fNotes.value.trim(); t.assignments = assignments;
       } else {
         state.tickets.push({
-          id: uid(), title, hours: hoursVal, client: selectedClient || "",
-          notes: fNotes.value.trim(),
-          assignee: null, completed: false
+          id: uid(), title, client: selectedClient || "",
+          notes: fNotes.value.trim(), assignments,
+          completed: false
         });
       }
       closeModal(); render(); saveState();
